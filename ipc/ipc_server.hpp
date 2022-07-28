@@ -4,7 +4,7 @@
 * by qqzhoucn@gmail.com July 28, 2022
 * 
 * Usage:
-* g++ test_server.cpp -o test_server -lzmq
+* g++ -std=c++11 test_server.cpp -o test_server -lzmq
 */
 
 #ifndef INCLUDED_IPC_SERVER_HPP_
@@ -17,7 +17,7 @@
 #include <string.h>
 #include <chrono>
 #include <thread>
-
+#include <functional>
 #ifdef _WIN32
 #include <Windows.h>
 #else
@@ -63,6 +63,18 @@ namespace zmq_ipc{
             return ret;
         }
         
+        template <typename TFunc>
+           void setEventCallback(TFunc&& func){
+               eventCallback_ = std::forward<TFunc>(func);
+           }
+
+           void eventHandler(const std::string& message){
+               if (eventCallback_) {
+                   // invoke registered callback object
+                   eventCallback_(const std::string& message);
+               }
+           }
+        
         /** run
          * @return none
          */
@@ -83,6 +95,8 @@ namespace zmq_ipc{
                     printf("=== send_buf(%d):%s\n", strlen(send_buf), send_buf);
                     printf("count=%ld\n",count++);
                     zmq_send(zeroReqpSock_, send_buf, strlen(send_buf), 0);
+                    const std::string& message(recv_buf);
+                    eventHandler(message);
                 }
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
@@ -112,6 +126,7 @@ namespace zmq_ipc{
         bool init_ = false;
         void *zeroReqpSock_ = nullptr;
         void *zeroReqpCtx_ = nullptr;
+        std::function<void ()> eventCallback_;
     };
 }
 #endif //INCLUDED_IPC_SERVER_HPP_
