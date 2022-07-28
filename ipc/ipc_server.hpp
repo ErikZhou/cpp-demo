@@ -36,15 +36,14 @@ namespace zmq_ipc{
          * @param name The name of the list.
          */
         IpcServer(const std::string& name)
-            : name_(name), dictionary() ,is_exit_(false){}
+            : name_(name), is_exit_(false){}
 
-        ~IpcServer()
-        {
+        ~IpcServer(){
             zmq_close(zeroReqpSock_);
             zmq_ctx_destroy(zeroReqpCtx_);
         }
         
-	 /** init 
+        /** init
          * @return 0 -- OK, others -- errors.
          */
         inline int init(){
@@ -68,35 +67,32 @@ namespace zmq_ipc{
                eventCallback_ = std::forward<TFunc>(func);
            }
 
-           void eventHandler(const std::string& message){
+           void eventHandler(const std::string& message, std::string& reply){
                if (eventCallback_) {
                    // invoke registered callback object
-                   eventCallback_(const std::string& message);
+                   eventCallback_(message, reply);
                }
            }
         
         /** run
          * @return none
          */
-        inline void run() const{
-            long long count = 0;
+        inline void run(){
             while(!is_exit_ && init_){
-                const char *add_reply = "proxy_reply:";
                 char recv_buf[1024] = {0};
-                char send_buf[1024] = {0};
                 memset(recv_buf, 0, sizeof(recv_buf));
                 int recv_size = zmq_recv (zeroReqpSock_, recv_buf, 1024, 0);
-                //printf("\n===size=%d\n",recv_size);
-                printf("=== recv_buf: %s\n", recv_buf);
                 if (recv_size > 0) {
-                    memset(send_buf, 0, sizeof(send_buf));
-                    memcpy(send_buf, add_reply, strlen(add_reply));
-                    memcpy(send_buf+strlen(add_reply), recv_buf, sizeof(recv_buf));
-                    printf("=== send_buf(%d):%s\n", strlen(send_buf), send_buf);
-                    printf("count=%ld\n",count++);
-                    zmq_send(zeroReqpSock_, send_buf, strlen(send_buf), 0);
-                    const std::string& message(recv_buf);
-                    eventHandler(message);
+                    std::string message;
+                    // convertion from char string to c++ string
+                    // using assign function
+                    message.assign(recv_buf);
+                    std::string reply;
+                    
+                    eventHandler(message, reply);
+                    
+                    //reply to client
+                    zmq_send(zeroReqpSock_, reply.c_str(), strlen(reply.c_str()), 0);
                 }
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
@@ -105,8 +101,7 @@ namespace zmq_ipc{
         /** Get the list's name.
          * @return the list's name.
          */
-        inline void exit()
-        {
+        inline void exit(){
             is_exit_ = true;
         }
 
@@ -121,12 +116,11 @@ namespace zmq_ipc{
 
     private:
         std::string name_ = "ipc:///tmp/feeds0";
-        std::string dictionary;
         bool is_exit_ = false;
         bool init_ = false;
         void *zeroReqpSock_ = nullptr;
         void *zeroReqpCtx_ = nullptr;
-        std::function<void ()> eventCallback_;
+        std::function<void(const std::string&, std::string&)> eventCallback_;
     };
 }
 #endif //INCLUDED_IPC_SERVER_HPP_
