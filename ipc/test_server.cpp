@@ -1,3 +1,12 @@
+/* ipc_server test
+* a cpp server wrapper for zemomq
+*
+* by qqzhoucn@gmail.com July 29, 2022
+*
+* Usage:
+* g++ -std=c++11 test_server.cpp -o test_server -lzmq
+*/
+
 #include "ipc_server.hpp"
 #include <iostream>
 
@@ -13,8 +22,8 @@ public:
         
         //added your only code here
         reply = "replay from server";
-        count_++;
         std::cout<<"eventCallbackHandler No[" <<count_<<"] reply:"<< reply<<"\n";
+        count_++;
     }
     
     void run(){

@@ -1,7 +1,7 @@
 /* ipc_server.hpp 
-* a cpp wrapper for zemomq
+* a cpp server wrapper for zemomq
 *
-* by qqzhoucn@gmail.com July 28, 2022
+* by qqzhoucn@gmail.com July 29, 2022
 * 
 * Usage:
 * g++ -std=c++11 test_server.cpp -o test_server -lzmq
@@ -98,8 +98,8 @@ namespace zmq_ipc{
             }
         }
 
-        /** Get the list's name.
-         * @return the list's name.
+        /** set exit
+         * @return none
          */
         inline void exit(){
             is_exit_ = true;
