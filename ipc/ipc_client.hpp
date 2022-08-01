@@ -51,7 +51,7 @@ namespace zmq_ipc{
          
             zeroReqpCtx_ = zmq_ctx_new();
             zeroReqpSock_ = zmq_socket(zeroReqpCtx_, ZMQ_REQ);
-            ret = zmq_connect(zeroReqpSock_, "ipc:///tmp/feeds0");
+            ret = zmq_connect(zeroReqpSock_, name_.c_str());
             if(ret < 0) {
                 init_ = false;
                 printf("=== Connect IPC failed\n");
